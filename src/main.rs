@@ -7,9 +7,10 @@ use serde_derive::Deserialize;
 
 const BASEURL: &str = "https://allmanga.to";
 const SEARCHGQL: &str = "query( $search: SearchInput $limit: Int $page: Int $translationType: VaildTranslationTypeEnumType $countryOrigin: VaildCountryOriginEnumType ) { shows( search: $search limit: $limit page: $page translationType: $translationType countryOrigin: $countryOrigin ) { edges { _id name availableEpisodes __typename } }}";
-const EPISODELISTGQL: &str =
-    "query ($showId: String!) { show( _id: $showId ) { _id availableEpisodesDetail }}";
-const EPISODELINKGQL: &str = "query ($showId: String!, $translationType: VaildTranslationTypeEnumType!, $episodeString: String!) { episode( showId: $showId translationType: $translationType episodeString: $episodeString ) { episodeString sourceUrls }}";
+// const EPISODELISTGQL: &str =
+//     "query ($showId: String!) { show( _id: $showId ) { _id availableEpisodesDetail }}";
+const EPISODELISTGQL: &str = "query ($showId: String!, $episodeNumStart: Float!, $episodeNumEnd: Float!) { episodeInfos( showId: $showId, episodeNumStart: $episodeNumStart, episodeNumEnd: $episodeNumEnd ) { episodeIdNum, notes }}";
+const EPISODELINKGQL: &str = "query ($showId: String!, $translationType: VaildTranslationTypeEnumType!, $episodeString: String!) { episode( showId: $showId translationType: $translationType episodeString: $episodeString ) { sourceUrls }}";
 const AGENT: &str =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/121.0";
 const ENCRYPT: &str = "175948514e4c4f57175b54575b5307515c050f5c0a0c0f0b0f0c0e590a0c0b5b0a0c0e0a0e0d0b5e0b5e0b0b0e0c0d010b5d0e0f0b090e0f0b0a0e0b0b0c0b0a0e0d0b5e0e0c0b0c0b0a0b0a0b090b5d0b5d0e0d0b080b080b5e0e0d0b0c0e0a0b090b0c0e080b5d0e0c0b0d0e0a0b0a0a0e0f590a0e0e0b0b5d0b0e0e0d0e0a0e080b0b0e0f0b5d0b0c0b5d0b5d0e0b0e0d0e0c0e0c0e0a0e0a0e080b0a0b0a0e0a0b0f0e0d0b0b0e0d0b0e0b5d0e0b0b080e0d0e080a0e0f590a0e0e5a0e0b0e0a0e5e0e0f0a010e0a0e0d0b5e0b5e0b0b0e0c0d010b5d0e0f0b090e0f0b0a0e0b0b0c0b0a0e0d0b5e0e0c0b0c0b0a0b0a0b090b5d0b5d0e0d0b080b080b5e0e0d0b0c0e0a0b090b0c0e080b5d0e0c0b0d0e0a0b0a0e080b0e0b0e0b0f0a000e5b0f0e0e090a0e0f590a0e0a590b0f0b0e0b5d0b0e0f0e0a590b090b0c0b0e0f0e0a590b0a0b5d0b0e0f0e0a590a0c0a590a0c0f0d0f0a0f0c0e0b0e0f0e5a0e0b0f0c0c5e0e0a0a0c0b5b0a0c0d090e5e0f5d0a0c0a590a0c0e0a0e0f0f0a0e0b0a0c0b5b0a0c0b0c0b0e0b0c0b0b0a5a0b0e0b5e0a5a0b0e0b0c0d0a0b0c0b0e0b5b0b0a0b5e0b5b0b0e0b0e0a000b0e0b0e0b0e0d5b0a0c0a590a0c0f0a0f0c0e0f0e000f0d0e590e0f0f0a0e5e0e010e000d0a0f5e0f0e0e0b0a0c0b5b0a0c0f0d0f0b0e0c0a0c0a590a0c0e5c0e0b0f5e0a0c0b5b0a0c0e0b0f0e0a5a0f0e0c0a0d0e0e090e0d0d5e0b090d5d0f080d5b0f5e0b080d0f0c000e0f0b0c0e080d010b0d0d010f0d0f0b0e0c0a0c0f5a";
@@ -18,18 +19,20 @@ pub fn main() -> Result<()> {
     // let Ok(response) = search_anime("chuunibyou", "sub") else {
     //     exit(1);
     // };
-    // let Ok(response) = episodes_list("pDPgcY7XvZy6QNa2f") else {
-    //     exit(1);
-    // };
-    let Ok(response) = episode_link("pDPgcY7XvZy6QNa2f", "3", "sub") else {
+    let Ok(response) = episodes_list("YYKgYqaJP2sPyYvk4") else {
         exit(1);
     };
+    // let Ok(response) = episode_link("pDPgcY7XvZy6QNa2f", "3", "sub") else {
+    //     exit(1);
+    // };
+    // dbg!("{}", episode_link("pDPgcY7XvZy6QNa2f", "3", "sub"));
+
     // let Ok(response) = substitute_data(ENCRYPT) else {
     //     exit(1);
     // };
 
     // println!("{response}");
-    dbg!(response);
+    // dbg!(response);
     Ok(())
 }
 
@@ -51,7 +54,7 @@ fn substitute_data(input: &str) -> Result<String> {
     Ok(out.replace("clock", "clock.json"))
 }
 
-fn search_anime(query: &str, translation: &str) -> Result<Search> {
+fn search_anime(query: &str, translation: &str) -> Result<Vec<Search>> {
     let params_raw = format!(
         r#"{{"search":{{"allowAdult":false,"allowUnknown":false,"query":"{}"}},"limit":40,"page":1,"translationType":"{}","countryOrigin":"ALL"}}"#,
         query, translation,
@@ -61,36 +64,25 @@ fn search_anime(query: &str, translation: &str) -> Result<Search> {
     let params_serialized = serde_urlencoded::to_string(&params)?;
 
     let response_raw = api_call(&params_serialized)?;
-    let response_serialized: Search = serde_json::from_str(
+    let response_serialized: SearchWrapper = serde_json::from_str(
         &response_raw
             .split_at(17)
             .1
             .split_at(response_raw.len() - 20)
             .0,
     )?;
-    Ok(response_serialized)
+    Ok(response_serialized.edges)
 }
 
-fn episodes_list(id: &str) -> Result<()> {
-    let params_raw = format!(r#"{{"showId":"{}"}}"#, id);
-    let params = &[
-        ("variables", params_raw.as_str()),
-        ("query", EPISODELISTGQL),
-    ];
-    let params_serialized = serde_urlencoded::to_string(&params)?;
-    let response_raw = api_call(&params_serialized)?;
-    dbg!(response_raw);
-    Ok(())
-}
-
-fn episode_link(id: &str, episode_string: &str, translation: &str) -> Result<Vec<EpisodeSource>> {
+fn episodes_list(id: &str) -> Result<Vec<Episode>> {
     let params_raw = format!(
-        r#"{{"showId":"{}","translationType":"{}","episodeString":"{}"}}"#,
-        id, translation, episode_string
+        r#"{{"showId":"{}","episodeNumStart":1,"episodeNumEnd":11}}"#,
+        // WARN: needs numbers read from input
+        id
     );
     let params = &[
         ("variables", params_raw.as_str()),
-        ("query", EPISODELINKGQL),
+        ("query", EPISODELISTGQL),
     ];
     let params_serialized = serde_urlencoded::to_string(&params)?;
     let response_raw = api_call(&params_serialized)?;
@@ -101,7 +93,28 @@ fn episode_link(id: &str, episode_string: &str, translation: &str) -> Result<Vec
             .split_at(response_raw.len() - 10)
             .0,
     )?;
-    Ok(response_serialized.episode.sourceUrls)
+    Ok(response_serialized.episodeInfos)
+}
+
+fn episode_link(id: &str, episode_string: &str, translation: &str) -> Result<Vec<Source>> {
+    let params_raw = format!(
+        r#"{{"showId":"{}","translationType":"{}","episodeString":"{}"}}"#,
+        id, translation, episode_string
+    );
+    let params = &[
+        ("variables", params_raw.as_str()),
+        ("query", EPISODELINKGQL),
+    ];
+    let params_serialized = serde_urlencoded::to_string(&params)?;
+    let response_raw = api_call(&params_serialized)?;
+    let response_serialized: SourceWrapper = serde_json::from_str(
+        &response_raw
+            .split_at(19)
+            .1
+            .split_at(response_raw.len() - 22)
+            .0,
+    )?;
+    Ok(response_serialized.sourceUrls)
 }
 
 fn api_call(params_serialized: &str) -> Result<String> {
@@ -117,20 +130,28 @@ fn api_call(params_serialized: &str) -> Result<String> {
     Ok(response_raw)
 }
 
+// source
 #[derive(Deserialize, Debug)]
 #[allow(non_snake_case, dead_code)]
 struct EpisodeWrapper {
-    episode: Episode,
+    episodeInfos: Vec<Episode>,
 }
 #[derive(Deserialize, Debug)]
 #[allow(non_snake_case, dead_code)]
 struct Episode {
-    episodeString: String,
-    sourceUrls: Vec<EpisodeSource>,
+    episodeIdNum: u128,
+    notes: String,
+}
+
+// episode
+#[derive(Deserialize, Debug)]
+#[allow(non_snake_case, dead_code)]
+struct SourceWrapper {
+    sourceUrls: Vec<Source>,
 }
 #[derive(Deserialize, Debug)]
 #[allow(non_snake_case, dead_code)]
-struct EpisodeSource {
+struct Source {
     sourceUrl: String,
     sourceName: String,
 }
@@ -138,12 +159,12 @@ struct EpisodeSource {
 // search entry structs
 #[derive(Deserialize, Debug)]
 #[allow(non_snake_case, dead_code)]
-struct Search {
-    edges: Vec<SearchField>,
+struct SearchWrapper {
+    edges: Vec<Search>,
 }
 #[derive(Deserialize, Debug)]
 #[allow(non_snake_case, dead_code)]
-struct SearchField {
+struct Search {
     _id: String,
     name: String,
     availableEpisodes: AvailableEpisodes,
