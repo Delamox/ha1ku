@@ -15,7 +15,7 @@
             <tr>
                 <td colspan="2" rowspan="2" class="width-auto">
                     <h1 class="title">HAIKU</h1>
-                    <span class="subtitle" style="color:red">Broken atm, I will likely not fix it anytime soon since I want to find a better and more reliable way to run things as well as rewrite everything to WASM using Rust.</span>
+                    <span class="subtitle" style="color:lightgreen">rewritten from the ground up in just 3 days with love <3</span>
                 </td>
             </tr>
             <tr>
@@ -26,10 +26,10 @@
                 <button type=submit id="submitButton">search</button>
             </form>
             <form hx-post=/query hx-target="#index" hx-swap=innerHTML>
-                <div hx-post=/info hx-target="#info" hx-swap="innerHTML" hx-trigger="click from:find .slc">
+                <!-- <div hx-post=/info hx-target="#info" hx-swap="innerHTML" hx-trigger="click from:find .slc"> -->
                     <select name="select" id="select" class="inputbox"></select>
                     <button type=submit id="submitButton" class="slc">select</button>
-                </div>
+                <!-- </div> -->
             </form>
             <form hx-post=/query hx-target="#iframe" hx-swap=outerHTML hx-on::before-request="document.getElementById('video').remove()">
                 <select name="index" id="index" class="inputboxsmall"></select>

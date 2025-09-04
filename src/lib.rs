@@ -1,32 +1,15 @@
-use anyhow::{Result, anyhow};
+use anyhow::{Context, Result, anyhow};
 use reqwest::Client;
 use serde_derive::Deserialize;
-use std::collections::HashMap;
+use serde_json::Number;
+use std::{cmp::Ordering, collections::HashMap};
 
 const BASEURL: &str = "https://allmanga.to";
 const SEARCHGQL: &str = "query( $search: SearchInput $limit: Int $page: Int $translationType: VaildTranslationTypeEnumType $countryOrigin: VaildCountryOriginEnumType ) { shows( search: $search limit: $limit page: $page translationType: $translationType countryOrigin: $countryOrigin ) { edges { _id name availableEpisodes __typename } }}";
-const EPISODEGQL: &str = "query ($showId: String!, $episodeNumStart: Float!, $episodeNumEnd: Float!) { episodeInfos( showId: $showId, episodeNumStart: $episodeNumStart, episodeNumEnd: $episodeNumEnd ) { episodeIdNum, notes }}";
+const EPISODEGQL: &str = "query ($showId: String!, $episodeNumStart: Float!, $episodeNumEnd: Float!) { episodeInfos( showId: $showId, episodeNumStart: $episodeNumStart, episodeNumEnd: $episodeNumEnd ) { episodeIdNum, notes, vidInforssub, vidInforsdub, vidInforsraw }}";
 const SOURCEGQL: &str = "query ($showId: String!, $translationType: VaildTranslationTypeEnumType!, $episodeString: String!) { episode( showId: $showId translationType: $translationType episodeString: $episodeString ) { sourceUrls }}";
 const AGENT: &str =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/121.0";
-
-fn substitute_data(input: &str) -> Result<String> {
-    let chunks: Vec<&str> = input[2..]
-        .as_bytes()
-        .chunks(2)
-        .map(|e| str::from_utf8(e).map_err(|_x| anyhow!("Chunk error")))
-        .collect::<Result<Vec<&str>>>()?;
-
-    let maps = get_table();
-    let mut out = String::new();
-    for chunk in chunks {
-        match maps.get(chunk) {
-            Some(e) => out.push_str(e),
-            None => (),
-        }
-    }
-    Ok(out.replace("clock", "clock.json"))
-}
 
 pub async fn search(query: &str, translation: &str) -> Result<Vec<Search>> {
     let params_raw = format!(
@@ -35,11 +18,11 @@ pub async fn search(query: &str, translation: &str) -> Result<Vec<Search>> {
     );
 
     let params = &[("variables", params_raw.as_str()), ("query", SEARCHGQL)];
-    let params_serialized = serde_urlencoded::to_string(&params)?;
+    let params_serialized = serde_urlencoded::to_string(params)?;
 
     let response_raw = api_call(&params_serialized).await?;
     let response_serialized: SearchWrapper = serde_json::from_str(
-        &response_raw
+        response_raw
             .split_at(17)
             .1
             .split_at(response_raw.len() - 20)
@@ -54,17 +37,36 @@ pub async fn episodes(id: &str, min: &str, max: &str) -> Result<Vec<Episode>> {
         id, min, max,
     );
     let params = &[("variables", params_raw.as_str()), ("query", EPISODEGQL)];
-    let params_serialized = serde_urlencoded::to_string(&params)?;
+    let params_serialized = serde_urlencoded::to_string(params)?;
     let response_raw = api_call(&params_serialized).await?;
-    dbg!(&response_raw);
-    let response_serialized: EpisodeWrapper = serde_json::from_str(
-        &response_raw
+    let mut response_serialized: EpisodeWrapper = serde_json::from_str(
+        response_raw
             .split_at(8)
             .1
             .split_at(response_raw.len() - 10)
             .0,
     )?;
-    Ok(response_serialized.episodeInfos)
+    response_serialized
+        .episodeInfos
+        .retain(|x| x.vidInforssub.is_some());
+    let mut failed = false;
+    response_serialized.episodeInfos.sort_by(|x, y| {
+        match x
+            .episodeIdNum
+            .as_f64()
+            .partial_cmp(&y.episodeIdNum.as_f64())
+        {
+            Some(o) => o,
+            None => {
+                failed = true;
+                Ordering::Equal
+            }
+        }
+    });
+    match failed {
+        true => Err(anyhow!("failed ordering episode list")),
+        false => Ok(response_serialized.episodeInfos),
+    }
 }
 
 pub async fn sources(id: &str, episode_string: &str, translation: &str) -> Result<Vec<Link>> {
@@ -73,19 +75,21 @@ pub async fn sources(id: &str, episode_string: &str, translation: &str) -> Resul
         id, translation, episode_string
     );
     let params = &[("variables", params_raw.as_str()), ("query", SOURCEGQL)];
-    let params_serialized = serde_urlencoded::to_string(&params)?;
+    let params_serialized = serde_urlencoded::to_string(params)?;
     let response_raw = api_call(&params_serialized).await?;
     let mut response_serialized: SourceWrapper = serde_json::from_str(
-        &response_raw
+        response_raw
             .split_at(19)
             .1
             .split_at(response_raw.len() - 22)
             .0,
     )?;
+    response_serialized.sourceUrls.retain(|x| {
+        x.r#type == "iframe" && matches!(x.sourceName.as_str(), "Default" | "S-mp4" | "Yt-mp4")
+    });
     response_serialized
         .sourceUrls
         .sort_by(|x, y| y.priority.total_cmp(&x.priority));
-    dbg!(&response_serialized);
     let response_decrypted = substitute_data(response_serialized.sourceUrls[0].sourceUrl.as_str())?;
 
     let response_raw = Client::new()
@@ -98,6 +102,23 @@ pub async fn sources(id: &str, episode_string: &str, translation: &str) -> Resul
         .await?;
     let response_serialized: LinkWrapper = serde_json::from_str(response_raw.as_str())?;
     Ok(response_serialized.links)
+}
+
+fn substitute_data(input: &str) -> Result<String> {
+    let chunks: Vec<&str> = input.as_bytes()[2..]
+        .chunks(2)
+        .map(|e| str::from_utf8(e).map_err(|_x| anyhow!("Chunk error")))
+        .collect::<Result<Vec<&str>>>()
+        .context("this crashed lmao")?;
+
+    let maps = get_table();
+    let mut out = String::new();
+    for chunk in chunks {
+        if let Some(e) = maps.get(chunk) {
+            out.push_str(e)
+        }
+    }
+    Ok(out.replace("clock", "clock.json"))
 }
 
 async fn api_call(params_serialized: &str) -> Result<String> {
@@ -124,10 +145,8 @@ struct LinkWrapper {
 #[allow(non_snake_case, dead_code)]
 pub struct Link {
     pub link: String,
-    pub hls: bool,
 }
 
-// source
 #[derive(Deserialize, Debug)]
 #[allow(non_snake_case, dead_code)]
 struct EpisodeWrapper {
@@ -136,11 +155,18 @@ struct EpisodeWrapper {
 #[derive(Deserialize, Debug)]
 #[allow(non_snake_case, dead_code)]
 pub struct Episode {
-    pub episodeIdNum: u128,
+    pub episodeIdNum: Number,
     pub notes: Option<String>,
+    vidInforssub: Option<Null>,
+    vidInforsdub: Option<Null>,
+    vidInforsraw: Option<Null>,
+}
+#[derive(Deserialize, Debug)]
+#[allow(non_snake_case, dead_code)]
+pub struct Null {
+    vidResolution: u64,
 }
 
-// episode
 #[derive(Deserialize, Debug)]
 #[allow(non_snake_case, dead_code)]
 struct SourceWrapper {
@@ -151,10 +177,10 @@ struct SourceWrapper {
 pub struct Source {
     pub sourceUrl: String,
     pub sourceName: String,
-    pub priority: f32,
+    r#type: String,
+    priority: f32,
 }
 
-// search entry pub structs
 #[derive(Deserialize, Debug)]
 #[allow(non_snake_case, dead_code)]
 struct SearchWrapper {
@@ -166,7 +192,7 @@ pub struct Search {
     pub _id: String,
     pub name: String,
     pub availableEpisodes: AvailableEpisodes,
-    pub __typename: String,
+    __typename: String,
 }
 #[derive(Deserialize, Debug)]
 #[allow(non_snake_case, dead_code)]
