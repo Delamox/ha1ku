@@ -1,0 +1,235 @@
+
+@font-face {
+  font-family: "JetBrainsMono";
+  src: url('/JetBrainsMono.woff') format('woff')
+}
+
+:root {
+  --font-family: "JetBrainsMono", monospace;
+  --line-height: 1.20rem;
+  --border-thickness: 2px;
+  --text-color: #000;
+  --text-color-alt: #666;
+  --background-color: #fff;
+  --background-color-alt: #eee;
+  font-family: var(--font-family);
+  font-size: 18px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text-color: #fff;
+    --text-color-alt: #aaa;
+    --background-color: #000;
+    --background-color-alt: #111;
+  }
+}
+
+body {
+  background: var(--background-color);
+  color: var(--text-color);
+  width: 100%;
+  margin: auto; 
+  padding: var(--line-height) 2ch;
+  max-width: calc(min(80ch, round(down, 100%, 1ch)));
+  line-height: var(--line-height);
+  overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
+  background-color: var(--background-color);
+}
+
+h1 {
+  line-height: calc(2 * var(--line-height));
+}
+
+table {
+  text-align: right;
+  position: relative;
+  background: black;
+  top: calc(var(--line-height) / 2);
+  width: calc(round(down, 100%, 1ch));
+  border-collapse: collapse;
+}
+
+th, td {
+  border: var(--border-thickness) solid var(--text-color);
+  padding: 
+    calc((var(--line-height) / 2))
+    calc(1ch - var(--border-thickness) / 2)
+    calc((var(--line-height) / 2) - (var(--border-thickness)))
+  ;
+} table tbody tr:first-child > * {
+  padding-top: calc((var(--line-height) / 2) - var(--border-thickness));
+}
+
+p {
+  word-break: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+img, video {
+  width: 100%;
+  object-fit: contain;
+  font-style: italic;
+  color: var(--text-color-alt);
+  margin-top: var(--line-height);
+  display: block;
+  overflow: hidden;
+}
+
+::-webkit-scrollbar {
+    height: var(--line-height);
+}
+
+input, button, textarea, select {
+  border: var(--border-thickness) solid var(--text-color);
+  border-radius: 0;
+  padding: 
+    calc(var(--line-height) / 2 - var(--border-thickness))
+    calc(1ch - var(--border-thickness));
+  font: inherit;
+  font-weight: inherit;
+  height: calc(var(--line-height) * 2);
+  background: var(--background-color);
+  color: var(--text-color);
+  /* -moz-osx-font-smoothing: inherit; */
+  /* -webkit-font-smoothing: inherit; */
+  -webkit-appearance: none;
+}
+
+/* bullshit hack to get an arrow */
+select {
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-color) 50%),
+    linear-gradient(135deg, var(--text-color) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) calc(1em - 2px),
+    calc(100% - 7px) calc(1em - 2px);
+  background-size:
+    7px 7px,
+    7px 7px;
+  background-repeat: no-repeat;
+}
+
+button:focus, input:focus {
+  --border-thickness: 3px;
+  outline: none;
+}
+
+input {
+  width: calc(round(down, 100%, 1ch));
+}::placeholder {
+  color: var(--text-color-alt);
+  opacity: 1;
+}::-ms-input-placeholder {
+  color: var(--text-color-alt);
+}
+
+button::-moz-focus-inner {
+  padding: 0;
+  border: 0
+} button {
+  cursor: pointer;
+} button:hover {
+  background: var(--background-color-alt);
+} button:active {
+  transform: translate(2px, 2px);
+}
+
+.header {
+  margin-bottom: calc(var(--line-height) * 1.5);
+  width: 100%;
+} .header h1 {
+  margin: 0;
+}
+
+.subtitle {
+  word-wrap: break-word;
+}
+
+#banner-container {
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 0px;
+}
+
+#banner-container img {
+  width: 88px;
+  height: 31px;
+  margin-top: 0;
+}
+
+.poster {
+    float: right;
+    width: 40%;
+    margin-left: var(--line-height);
+    margin-bottom: var(--line-height);
+}
+
+#submitButton {
+  width: 15%;
+  float: right;
+}
+
+.sd {
+  width: 15%;
+  float: right;
+}
+
+.inputbox {
+  width: 85%;
+  clear: both;
+}
+
+.inputboxsmall {
+  width: 70%;
+  clear: both;
+}
+
+@media screen and (max-width: 480px) {
+  :root {
+    font-size: 12px;
+  }
+  body {
+    padding: var(--line-height) 1ch;
+  }
+  #submitButton {
+    width: 20%;
+  }
+  .inputbox {
+    width: 80%;
+  }
+  .inputboxsmall {
+    width: 60%;
+  }
+  .sd {
+    width: 20%;
+  }
+}
+
+.back {
+    margin: 0;
+    display: block;
+    pointer-events: none;
+    position: fixed;
+    top: 0; left: 0; bottom: 0; right: 0;
+    z-index: -1;
+    overflow: clip;
+    font-size: 2vh;
+    line-height: 2vh;
+}
+
+.desc {
+  text-align: center;
+}
+
+.htmx-request button {
+  color: #f00 !important;
+  border-color: #f00 !important;
+}
