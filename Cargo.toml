@@ -1,11 +1,10 @@
 [package]
 name = "ha1ku"
-version = "2.0.0"
+version = "2.1.0"
 edition = "2024"
 
 [dependencies]
 anyhow = "1.0.99"
-base64 = "0.22.1"
 reqwest = { version = "0.12.23", features = ["blocking", "json"] }
 rocket = "0.5.1"
 serde = { version = "1.0.219", features = ["derive"] }

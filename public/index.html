@@ -26,15 +26,15 @@
                 <button type=submit id="submitButton">search</button>
             </form>
             <form hx-post=/query hx-target="#index" hx-swap=innerHTML>
-                <!-- <div hx-post=/info hx-target="#info" hx-swap="innerHTML" hx-trigger="click from:find .slc"> -->
+                <div hx-post=/info hx-target="#info" hx-swap="innerHTML" hx-trigger="click from:find .slc">
                     <select name="select" id="select" class="inputbox"></select>
                     <button type=submit id="submitButton" class="slc">select</button>
-                <!-- </div> -->
+                </div>
             </form>
             <form hx-post=/query hx-target="#iframe" hx-swap=outerHTML hx-on::before-request="document.getElementById('video').remove()">
                 <select name="index" id="index" class="inputboxsmall"></select>
                 <button type=submit id="submitButton">watch</button>
-                <select name="sd" id="sd" class="sd">
+                <select name="mediaType" id="mediaType" class="mediaType">
                     <option value="sub" selected>sub</option>
                     <option value="dub">dub</option>
                 </select>

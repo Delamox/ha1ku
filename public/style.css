@@ -177,7 +177,7 @@ button::-moz-focus-inner {
   float: right;
 }
 
-.sd {
+.mediaType {
   width: 15%;
   float: right;
 }
@@ -208,7 +208,7 @@ button::-moz-focus-inner {
   .inputboxsmall {
     width: 60%;
   }
-  .sd {
+  .mediaType {
     width: 20%;
   }
 }

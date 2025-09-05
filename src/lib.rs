@@ -8,6 +8,7 @@ const BASEURL: &str = "https://allmanga.to";
 const SEARCHGQL: &str = "query( $search: SearchInput $limit: Int $page: Int $translationType: VaildTranslationTypeEnumType $countryOrigin: VaildCountryOriginEnumType ) { shows( search: $search limit: $limit page: $page translationType: $translationType countryOrigin: $countryOrigin ) { edges { _id name availableEpisodes __typename } }}";
 const EPISODEGQL: &str = "query ($showId: String!, $episodeNumStart: Float!, $episodeNumEnd: Float!) { episodeInfos( showId: $showId, episodeNumStart: $episodeNumStart, episodeNumEnd: $episodeNumEnd ) { episodeIdNum, notes, vidInforssub, vidInforsdub, vidInforsraw }}";
 const SOURCEGQL: &str = "query ($showId: String!, $translationType: VaildTranslationTypeEnumType!, $episodeString: String!) { episode( showId: $showId translationType: $translationType episodeString: $episodeString ) { sourceUrls }}";
+const INFOGQL: &str = "query ($_id: String!) { show ( _id: $_id ) { name, englishName, nativeName, thumbnail, score, episodeCount, description, status, studios }}";
 const AGENT: &str =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/121.0";
 
@@ -104,6 +105,24 @@ pub async fn sources(id: &str, episode_string: &str, translation: &str) -> Resul
     Ok(response_serialized.links)
 }
 
+pub async fn info(query: &str) -> Result<Info> {
+    let params_raw = format!(r#"{{"_id":"{}"}}"#, query);
+    let params = &[("variables", params_raw.as_str()), ("query", INFOGQL)];
+    let params_serialized = serde_urlencoded::to_string(params)?;
+
+    let response_raw = api_call(&params_serialized).await?;
+    let response_serialized: Info = serde_json::from_str(
+        response_raw
+            .split_at(16)
+            .1
+            .split_at(response_raw.len() - 19)
+            .0,
+    )
+    .unwrap();
+    dbg!(&response_serialized);
+    Ok(response_serialized)
+}
+
 fn substitute_data(input: &str) -> Result<String> {
     let chunks: Vec<&str> = input.as_bytes()[2..]
         .chunks(2)
@@ -134,6 +153,20 @@ async fn api_call(params_serialized: &str) -> Result<String> {
         .text()
         .await?;
     Ok(response_raw)
+}
+
+#[derive(Deserialize, Debug)]
+#[allow(non_snake_case, dead_code)]
+pub struct Info {
+    pub name: Option<String>,
+    pub englishName: Option<String>,
+    pub nativeName: Option<String>,
+    pub thumbnail: Option<String>,
+    pub score: Option<Number>,
+    pub episodeCount: Option<String>,
+    pub description: Option<String>,
+    pub status: Option<String>,
+    pub studios: Option<Vec<String>>,
 }
 
 #[derive(Deserialize, Debug)]

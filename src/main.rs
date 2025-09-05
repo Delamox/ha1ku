@@ -1,5 +1,5 @@
 use anyhow::{Result, anyhow};
-use ha1ku::{episodes, search, sources};
+use ha1ku::{episodes, info, search, sources};
 use rocket::data::{Data, ToByteUnit};
 use rocket::fs::FileServer;
 use rocket::response::content::RawHtml;
@@ -12,7 +12,7 @@ fn rocket() -> _ {
     let path = std::env::current_dir().unwrap().join("public");
     rocket::build()
         .mount("/", FileServer::from(path))
-        .mount("/", routes![query_handler])
+        .mount("/", routes![query_handler, info_handler])
 }
 
 #[post("/query", data = "<data>")]
@@ -34,21 +34,26 @@ async fn query_handler(data: Data<'_>) -> RawHtml<String> {
         }
     }
 }
+
 async fn query(stream: String) -> Result<String> {
     let wrapped = serde_urlencoded::from_str::<Vec<(String, String)>>(&stream)?;
     let query_type = wrapped[0].0.as_str();
     let query = wrapped[0].1.as_str();
+    let mut media_type = "sub";
+    if wrapped.len() == 2 {
+        media_type = wrapped[1].1.as_str();
+    }
     match query_type {
         "search" => search_format(query).await,
         "select" => episodes_format(query).await,
-        "index" => sources_format(query).await,
+        "index" => sources_format(query, media_type).await,
         _ => Err(anyhow!("failed to match query type")),
     }
 }
 
-async fn sources_format(query: &str) -> Result<String> {
+async fn sources_format(query: &str, media_type: &str) -> Result<String> {
     let query: Vec<&str> = query.split(':').collect();
-    let sources_result = sources(query[0], query[1], "sub").await?;
+    let sources_result = sources(query[0], query[1], media_type).await?;
     let construct: String = format!(
         r#"<span id="iframe"><video id="video" crossorigin="anonymous" class="{}" controls><script src="player.js"></script></video></span>"#,
         sources_result[0].link
@@ -98,5 +103,61 @@ async fn search_format(query: &str) -> Result<String> {
             .as_str(),
         );
     }
+    Ok(construct)
+}
+
+#[post("/info", data = "<data>")]
+async fn info_handler(data: Data<'_>) -> RawHtml<String> {
+    let result = info_query(
+        data.open(2.mebibytes())
+            .into_string()
+            .await
+            .unwrap()
+            .into_inner()
+            .to_string(),
+    )
+    .await;
+    match result.is_ok() {
+        true => RawHtml(result.unwrap()),
+        false => {
+            dbg!(result.unwrap_err());
+            RawHtml("ERROR".to_string())
+        }
+    }
+}
+
+async fn info_query(stream: String) -> Result<String> {
+    let wrapped = serde_urlencoded::from_str::<Vec<(String, String)>>(&stream)?;
+    let query = wrapped[0].1.split(":").collect::<Vec<&str>>()[0];
+    info_format(query).await
+}
+
+async fn info_format(query: &str) -> Result<String> {
+    let info = info(query).await?;
+    let mut construct: String = format!(
+        r#"<span id=info><img src="{}" class="poster"/><span><h1>{}</h1><span><i>"#,
+        info.thumbnail.unwrap_or("".to_string()),
+        info.name.unwrap_or("".to_string()),
+    );
+    if info.score.is_some() {
+        construct.push_str(format!("score: {}<br>", info.score.unwrap()).as_str())
+    }
+    if info.episodeCount.is_some() {
+        construct.push_str(format!("episodes: {}<br>", info.episodeCount.unwrap()).as_str())
+    }
+    if info.status.is_some() {
+        construct.push_str(format!("status: {}<br>", info.status.unwrap()).as_str())
+    }
+    if info.studios.is_some() {
+        construct.push_str(format!("studio: {}<br>", info.studios.unwrap()[0]).as_str())
+    }
+    if info.nativeName.is_some() {
+        construct.push_str(format!("original title: {}<br>", info.nativeName.unwrap()).as_str())
+    }
+    construct.push_str("</i>");
+    if info.description.is_some() {
+        construct.push_str(format!("<p>{}</p>", info.description.unwrap()).as_str());
+    }
+    construct.push_str("</span></span></span>");
     Ok(construct)
 }
