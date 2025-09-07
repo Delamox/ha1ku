@@ -45,19 +45,31 @@ async fn query(stream: String) -> Result<String> {
     }
     match query_type {
         "search" => search_format(query).await,
-        "select" => episodes_format(query).await,
-        "index" => sources_format(query, media_type).await,
+        "episodes" => episodes_format(query).await,
+        "sources" => sources_format(query, media_type).await,
         _ => Err(anyhow!("failed to match query type")),
     }
 }
 
 async fn sources_format(query: &str, media_type: &str) -> Result<String> {
     let query: Vec<&str> = query.split(':').collect();
-    let sources_result = sources(query[0], query[1], media_type).await?;
-    let construct: String = format!(
-        r#"<span id="iframe"><video id="video" crossorigin="anonymous" class="{}" controls><script src="player.js"></script></video></span>"#,
-        sources_result[0].link
-    );
+    let is_download = media_type.len() > 3;
+    let sources_result = sources(query[0], query[1], media_type, is_download).await?;
+    let mut construct = String::new();
+    match is_download {
+        true => {
+            construct = format!(
+                r#"<span id="iframe"><a href="{}" download="sample.mp4">DOWNLOAD</a></span>"#,
+                sources_result[0].link
+            );
+        }
+        false => {
+            construct = format!(
+                r#"<span id="iframe"><video id="video" crossorigin="anonymous" class="{}" controls><script src="player.js"></script></video></span>"#,
+                sources_result[0].link
+            );
+        }
+    }
     Ok(construct)
 }
 

@@ -85,7 +85,7 @@ img, video {
     height: var(--line-height);
 }
 
-input, button, textarea, select {
+input, button, textarea, select, a {
   border: var(--border-thickness) solid var(--text-color);
   border-radius: 0;
   padding: 
@@ -138,6 +138,12 @@ button::-moz-focus-inner {
   background: var(--background-color-alt);
 } button:active {
   transform: translate(2px, 2px);
+}
+
+a {
+  margin-top: var(--line-height);
+  display: block;
+  width: fit-content;
 }
 
 .header {

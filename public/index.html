@@ -21,22 +21,24 @@
             <tr>
         </table>
         <span class="forms">
-            <form hx-post="/query" hx-target="#select" hx-swap=innerHTML>
+            <form hx-post="/query" hx-target="#episodes" hx-swap=innerHTML>
                 <input type=text name=search class="inputbox" placeholder="search...">
                 <button type=submit id="submitButton">search</button>
             </form>
-            <form hx-post=/query hx-target="#index" hx-swap=innerHTML>
+            <form hx-post=/query hx-target="#sources" hx-swap=innerHTML>
                 <div hx-post=/info hx-target="#info" hx-swap="innerHTML" hx-trigger="click from:find .slc">
-                    <select name="select" id="select" class="inputbox"></select>
+                    <select name="episodes" id="episodes" class="inputbox"></select>
                     <button type=submit id="submitButton" class="slc">select</button>
                 </div>
             </form>
             <form hx-post=/query hx-target="#iframe" hx-swap=outerHTML hx-on::before-request="document.getElementById('video').remove()">
-                <select name="index" id="index" class="inputboxsmall"></select>
+                <select name="sources" id="sources" class="inputboxsmall"></select>
                 <button type=submit id="submitButton">watch</button>
                 <select name="mediaType" id="mediaType" class="mediaType">
                     <option value="sub" selected>sub</option>
                     <option value="dub">dub</option>
+                    <option value="sub_dl">sub[dl]</option>
+                    <option value="dub_dl">dub[dl]</option>
                 </select>
             </form>
         </span>
@@ -46,6 +48,7 @@
             <details>
                 <summary>click me!</summary>
                 <p class="desc">Yeah you can stream anime here, lmk if not working >:3</p>
+                <p class="desc">Haiku was created in attempt to provide a simple way to watch anime without having to deal with stuff like long page loads, popup ads every 2 seconds and other annoying bloat usually found within other websites since the dissapearance of 4anime.to.
                 <div id="banner-container">
                 <img loading="lazy" src="static/run-rust.png"/>
                 <img loading="lazy" src="static/made-on-gnu-linux.png"/>

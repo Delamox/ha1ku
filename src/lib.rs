@@ -70,10 +70,17 @@ pub async fn episodes(id: &str, min: &str, max: &str) -> Result<Vec<Episode>> {
     }
 }
 
-pub async fn sources(id: &str, episode_string: &str, translation: &str) -> Result<Vec<Link>> {
+pub async fn sources(
+    id: &str,
+    episode_string: &str,
+    media_type: &str,
+    is_download: bool,
+) -> Result<Vec<Link>> {
     let params_raw = format!(
         r#"{{"showId":"{}","translationType":"{}","episodeString":"{}"}}"#,
-        id, translation, episode_string
+        id,
+        &media_type[0..3],
+        episode_string
     );
     let params = &[("variables", params_raw.as_str()), ("query", SOURCEGQL)];
     let params_serialized = serde_urlencoded::to_string(params)?;
@@ -85,9 +92,19 @@ pub async fn sources(id: &str, episode_string: &str, translation: &str) -> Resul
             .split_at(response_raw.len() - 22)
             .0,
     )?;
-    response_serialized.sourceUrls.retain(|x| {
-        x.r#type == "iframe" && matches!(x.sourceName.as_str(), "Default" | "S-mp4" | "Yt-mp4")
-    });
+    match is_download {
+        true => {
+            response_serialized.sourceUrls.retain(|x| {
+                x.r#type == "iframe" && matches!(x.sourceName.as_str(), "S-mp4" | "Yt-mp4")
+            });
+        }
+        false => {
+            response_serialized.sourceUrls.retain(|x| {
+                x.r#type == "iframe"
+                    && matches!(x.sourceName.as_str(), "Default" | "S-mp4" | "Yt-mp4")
+            });
+        }
+    }
     response_serialized
         .sourceUrls
         .sort_by(|x, y| y.priority.total_cmp(&x.priority));
