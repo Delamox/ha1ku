@@ -136,7 +136,6 @@ pub async fn info(query: &str) -> Result<Info> {
             .0,
     )
     .unwrap();
-    dbg!(&response_serialized);
     Ok(response_serialized)
 }
 

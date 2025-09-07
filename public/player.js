@@ -1,9 +1,8 @@
 var video = document.getElementById('video');
 var link = video.className;
-console.log(link);
 video.removeAttribute('class');
 
-if(link.endsWith("m3u8") && Hls.isSupported()) {
+if(link.endsWith("m3u8")) {
   video.volume = 0.3;
   var hls = new Hls();
   hls.loadSource(link);

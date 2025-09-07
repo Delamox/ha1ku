@@ -55,21 +55,21 @@ async fn sources_format(query: &str, media_type: &str) -> Result<String> {
     let query: Vec<&str> = query.split(':').collect();
     let is_download = media_type.len() > 3;
     let sources_result = sources(query[0], query[1], media_type, is_download).await?;
-    let mut construct = String::new();
-    match is_download {
+
+    let construct = match is_download {
         true => {
-            construct = format!(
-                r#"<span id="iframe"><a href="{}" download="sample.mp4">DOWNLOAD</a></span>"#,
+            format!(
+                r#"<span id="iframe"><a id="video" href="{}" download>download</a></span>"#,
                 sources_result[0].link
-            );
+            )
         }
         false => {
-            construct = format!(
+            format!(
                 r#"<span id="iframe"><video id="video" crossorigin="anonymous" class="{}" controls><script src="player.js"></script></video></span>"#,
                 sources_result[0].link
-            );
+            )
         }
-    }
+    };
     Ok(construct)
 }
 

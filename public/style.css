@@ -1,4 +1,3 @@
-
 @font-face {
   font-family: "JetBrainsMono";
   src: url('/JetBrainsMono.woff') format('woff')
@@ -144,6 +143,7 @@ a {
   margin-top: var(--line-height);
   display: block;
   width: fit-content;
+  text-decoration: none;
 }
 
 .header {
