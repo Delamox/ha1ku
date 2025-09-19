@@ -27,10 +27,16 @@ async fn query_handler(data: Data<'_>) -> RawHtml<String> {
     )
     .await;
     match result.is_ok() {
-        true => RawHtml(result.unwrap()),
+        true => {
+            dbg!(&result);
+            RawHtml(result.unwrap())
+        }
         false => {
             dbg!(result.unwrap_err());
-            RawHtml("ERROR".to_string())
+            RawHtml(
+                "<script>if(!alert(\"A critical error has occured, the page will now reload.\")){window.location.reload();}</script>".to_string(),
+            )
+            //catchall error for shit that goes wrong in the query function, refreshes the page because error notifications are depended on request type.
         }
     }
 }
@@ -44,9 +50,15 @@ async fn query(stream: String) -> Result<String> {
         media_type = wrapped[1].1.as_str();
     }
     match query_type {
-        "search" => search_format(query).await,
-        "episodes" => episodes_format(query).await,
-        "sources" => sources_format(query, media_type).await,
+        "search" => Ok(search_format(query)
+            .await
+            .unwrap_or("<option>error: no results!</option>".to_string())),
+        "episodes" => Ok(episodes_format(query)
+            .await
+            .unwrap_or("<option>error: no episodes found!</option>".to_string())),
+        "sources" => Ok(sources_format(query, media_type)
+            .await
+            .unwrap_or("<a id=\"iframe\">error: no sources found!</a>".to_string())),
         _ => Err(anyhow!("failed to match query type")),
     }
 }

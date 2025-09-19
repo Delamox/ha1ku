@@ -29,7 +29,10 @@ pub async fn search(query: &str, translation: &str) -> Result<Vec<Search>> {
             .split_at(response_raw.len() - 20)
             .0,
     )?;
-    Ok(response_serialized.edges)
+    match response_serialized.edges.len() {
+        0 => Err(anyhow!("no search results for query")),
+        _ => Ok(response_serialized.edges),
+    }
 }
 
 pub async fn episodes(id: &str, min: &str, max: &str) -> Result<Vec<Episode>> {
