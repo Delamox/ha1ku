@@ -4,7 +4,7 @@
         <title>haiku</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1, user-scalable=no">
-        <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="debug.css">
         <link rel="preload" as="font" href="JetBrainsMono.woff" type="font/woff" crossorigin="anonymous">
         <script src="htmx.min.js"></script>
         <script async src="hls.light.min.js"></script>
@@ -15,36 +15,30 @@
             <tr>
                 <td colspan="2" rowspan="2" class="width-auto">
                     <h1 class="title">HAIKU</h1>
-                    <span class="subtitle">yeah..</span>
+                    <span class="subtitle">Sometimes I don't know what to do with myself, this is one of those times. I hope that maybe in recording this I won't FUCKING EXPLODE!!</span>
                 </td>
             </tr>
             <tr>
         </table>
         <span class="forms">
-            <form hx-post="/query" hx-target="#select" hx-swap=innerHTML>
+            <form hx-post="/query" hx-target="#episodes" hx-swap=innerHTML>
                 <input type=text name=search class="inputbox" placeholder="search...">
                 <button type=submit id="submitButton">search</button>
             </form>
-            <form hx-post=/query hx-target="#index" hx-swap=innerHTML>
+            <form hx-post=/query hx-target="#sources" hx-swap=innerHTML>
                 <div hx-post=/info hx-target="#info" hx-swap="innerHTML" hx-trigger="click from:find .slc">
-                    <select name="select" id="select" class="inputbox"></select>
+                    <select name="episodes" id="episodes" class="inputbox"></select>
                     <button type=submit id="submitButton" class="slc">select</button>
                 </div>
             </form>
-            <!-- <form hx-post=/query hx-target="#iframe" hx-swap=outerHTML hx-on::before-request="document.getElementById('video').remove()"> -->
-                <!-- <select name="index" id="index" class="inputboxsmall"></select> -->
-                <!-- <button type=submit id="submitButton">watch</button> -->
-                <!-- <select name="sd" id="sd" class="sd"> -->
-                    <!-- <option value="sub">sub</option> -->
-                    <!-- <option value="dub">dub</option> -->
-                <!-- </select> -->
-            <!-- </form> -->
-            <form hx-post=/download/test.mp4 >
-                <select name="index" id="index" class="inputboxsmall"></select>
-                <button type=submit id="submitButton">watch downlaod</button>
-                <select name="sd" id="sd" class="sd">
-                    <option value="sub">sub</option>
+            <form hx-post=/query hx-target="#iframe" hx-swap=outerHTML hx-on::before-request="document.getElementById('video').remove()">
+                <select name="sources" id="sources" class="inputboxsmall"></select>
+                <button type=submit id="submitButton">watch</button>
+                <select name="mediaType" id="mediaType" class="mediaType">
+                    <option value="sub" selected>sub</option>
                     <option value="dub">dub</option>
+                    <option value="sub_dl">sub[dl]</option>
+                    <option value="dub_dl">dub[dl]</option>
                 </select>
             </form>
         </span>
@@ -54,6 +48,8 @@
             <details>
                 <summary>click me!</summary>
                 <p class="desc">Yeah you can stream anime here, lmk if not working >:3</p>
+                <p class="desc">Haiku was created in attempt to provide a simple way to watch anime without having to deal with stuff like long page loads, popup ads every 2 seconds and other annoying bloat usually found within other websites since the disappearance of 4anime.to.
+                <p class="desc">Created with <3 by del, contact: del[at]displacement[dot]dev</p>
                 <div id="banner-container">
                 <img loading="lazy" src="static/run-rust.png"/>
                 <img loading="lazy" src="static/made-on-gnu-linux.png"/>

@@ -134,8 +134,7 @@ pub async fn info(query: &str) -> Result<Info> {
             .1
             .split_at(response_raw.len() - 19)
             .0,
-    )
-    .unwrap();
+    )?;
     Ok(response_serialized)
 }
 

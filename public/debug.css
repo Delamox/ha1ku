@@ -1,0 +1,84 @@
+@font-face {
+  font-family: "JetBrainsMono";
+  src: url('/JetBrainsMono.woff') format('woff');
+}
+
+:root {
+  color-scheme: light dark;
+  @media (prefers-color-scheme: light) {
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    color-scheme: dark;
+  }
+  --line-height: 1.20rem;
+  --border-thickness: 2px;
+  --text-color: light-dark(#000, #fff);
+  --text-color-alt: light-dark(#666, #aaa);
+  --background-color: light-dark(#fff, #000);
+  --background-color-alt: light-dark(#eee, #111);
+  background: var(--background-color);
+  color: var(--text-color);
+  font-family: "JetBrainsMono", monospace;
+  font-size: 18px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+body {
+  width: 100%;
+  margin: auto;
+  padding: var(--line-height) 2ch;
+  max-width: calc(min(80ch, round(down, 100%, 1ch)));
+  line-height: var(--line-height);
+  overflow-x: hidden;
+}
+
+pre {
+    margin: 0;
+    display: block;
+    pointer-events: none;
+    position: fixed;
+    top: 0; left: 0; bottom: 0; right: 0;
+    z-index: -1;
+    overflow: clip;
+    font-size: 2vh;
+    line-height: 2vh;
+}
+
+h1 {
+  line-height: calc(2 * var(--line-height))
+}
+
+p {
+  word-break: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+table {
+  text-align: right;
+  position: relative;
+  border-collapse: collapse;
+}
+
+th, td {
+  border: var(--border-thickness) solid var(--text-color);
+  padding: 
+    calc((var(--line-height) / 2))
+    calc(1ch - var(--border-thickness) / 2)
+    calc((var(--line-height) / 2) - (var(--border-thickness)))
+  ;
+} table tbody tr:first-child > * {
+  padding-top: calc((var(--line-height) / 2) - var(--border-thickness));
+}
+
+input, button, textarea, select, a {
+  border: var(--border-thickness) solid var(--text-color);
+  padding: calc(var(--line-height) / 2 - var(--border-thickness));
+  font: inherit;
+  font-weight: inherit;
+}
