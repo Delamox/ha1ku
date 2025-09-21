@@ -4,81 +4,82 @@
 }
 
 :root {
-  color-scheme: light dark;
-  @media (prefers-color-scheme: light) {
-    color-scheme: light;
-  }
-  @media (prefers-color-scheme: dark) {
-    color-scheme: dark;
-  }
-  --line-height: 1.20rem;
-  --border-thickness: 2px;
-  --text-color: light-dark(#000, #fff);
-  --text-color-alt: light-dark(#666, #aaa);
-  --background-color: light-dark(#fff, #000);
-  --background-color-alt: light-dark(#eee, #111);
-  background: var(--background-color);
-  color: var(--text-color);
+  --pw: calc(min(80ch, round(down, 100%, 1ch)));
+  --bt: 2px;
+  --tx: #fff;
+  --tx-alt: #aaa;
+  --bg: #000;
+  --bg-alt: #C48AFF;
+  background: var(--bg-alt);
+  color: var(--tx);
   font-family: "JetBrainsMono", monospace;
   font-size: 18px;
 }
 
 * {
-  box-sizing: border-box;
   margin: 0;
+  padding: 0;
+  font-family: "JetBrainsMono", monospace;
+  font-size: 18px;
+}
+
+@keyframes blink {
+  50% {
+	  color:black;
+  }
+}
+
+html, body {
+  margin: auto;
+  height: 100%;
 }
 
 body {
   width: 100%;
-  margin: auto;
-  padding: var(--line-height) 2ch;
-  max-width: calc(min(80ch, round(down, 100%, 1ch)));
+  max-width: var(--pw);
   line-height: var(--line-height);
   overflow-x: hidden;
+  background-color: var(--bg);
+  text-align: center;
 }
 
-pre {
-    margin: 0;
-    display: block;
-    pointer-events: none;
-    position: fixed;
-    top: 0; left: 0; bottom: 0; right: 0;
-    z-index: -1;
-    overflow: clip;
-    font-size: 2vh;
-    line-height: 2vh;
+.title {
+  width: 13ch;
+  height: calc(3 * 1.2rem);
+  display: block;
+  float: center;
+  margin-right: auto;
+  margin-left: auto;
 }
 
-h1 {
-  line-height: calc(2 * var(--line-height))
+.tbf-r,
+.tbf-l {
+  width: 50%;
+  display: inline-block;
+  float: left;
 }
 
-p {
-  word-break: break-word;
-  word-wrap: break-word;
-  hyphens: auto;
-}
-
-table {
+.tbf-r {
   text-align: right;
-  position: relative;
-  border-collapse: collapse;
+}
+.tbf-l {
+  text-align: left;
 }
 
-th, td {
-  border: var(--border-thickness) solid var(--text-color);
-  padding: 
-    calc((var(--line-height) / 2))
-    calc(1ch - var(--border-thickness) / 2)
-    calc((var(--line-height) / 2) - (var(--border-thickness)))
-  ;
-} table tbody tr:first-child > * {
-  padding-top: calc((var(--line-height) / 2) - var(--border-thickness));
+.violet {
+  color: var(--bg-alt);
 }
 
-input, button, textarea, select, a {
-  border: var(--border-thickness) solid var(--text-color);
-  padding: calc(var(--line-height) / 2 - var(--border-thickness));
-  font: inherit;
-  font-weight: inherit;
+.blink {
+  animation: blink 2s linear infinite;
+}
+
+.delay-1u {
+  animation-delay: 0.5s;
+}
+.delay-2u {
+  animation-delay: 1s;
+}
+.delay-3u {
+  animation-delay: 1.5s;
 }

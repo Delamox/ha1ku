@@ -36,7 +36,7 @@ async fn query_handler(data: Data<'_>) -> RawHtml<String> {
             RawHtml(
                 "<script>if(!alert(\"A critical error has occured, the page will now reload.\")){window.location.reload();}</script>".to_string(),
             )
-            //catchall error for shit that goes wrong in the query function, refreshes the page because error notifications are depended on request type.
+            //catchall error for shit that goes wrong in the query function, refreshes the page because error notifications are dependent on request type.
         }
     }
 }
