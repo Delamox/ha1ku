@@ -14,7 +14,7 @@ const AGENT: &str =
 
 pub async fn search(query: &str, translation: &str) -> Result<Vec<Search>> {
     let params_raw = format!(
-        r#"{{"search":{{"allowAdult":false,"allowUnknown":false,"query":"{}"}},"limit":40,"page":1,"translationType":"{}","countryOrigin":"ALL"}}"#,
+        r#"{{"search":{{"allowAdult":true,"allowUnknown":false,"query":"{}"}},"limit":40,"page":1,"translationType":"{}","countryOrigin":"ALL"}}"#,
         query, translation,
     );
 

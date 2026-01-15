@@ -60,6 +60,7 @@ async fn query(stream: String) -> Result<String> {
         "sources" => Ok(sources_format(query, media_type)
             .await
             .unwrap_or("<a id=\"iframe\">error: no sources found!</a>".to_string())),
+        "mediaType" => Ok("<a id=\"iframe\">error: no sources found!</a>".to_string()),
         _ => Err(anyhow!("failed to match query type")),
     }
 }
@@ -174,7 +175,9 @@ async fn info_format(query: &str) -> Result<String> {
         construct.push_str(format!("status: {}<br>", info.status.unwrap()).as_str())
     }
     if info.studios.is_some() {
-        construct.push_str(format!("studio: {}<br>", info.studios.unwrap()[0]).as_str())
+        if !info.studios.clone().unwrap().is_empty() {
+            construct.push_str(format!("studio: {}<br>", info.studios.unwrap()[0]).as_str())
+        }
     }
     if info.nativeName.is_some() {
         construct.push_str(format!("original title: {}<br>", info.nativeName.unwrap()).as_str())
