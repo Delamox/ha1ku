@@ -28,11 +28,11 @@ async fn query_handler(data: Data<'_>) -> RawHtml<String> {
     .await;
     match result.is_ok() {
         true => {
-            println!("query ok");
+            println!("ok");
             RawHtml(result.unwrap())
         }
         false => {
-            dbg!(result.unwrap_err());
+            eprintln!("{}", result.unwrap_err());
             RawHtml(
                 "<script>if(!alert(\"A critical error has occured, the page will now reload.\")){window.location.reload();}</script>".to_string(),
             )
@@ -45,7 +45,7 @@ async fn query(stream: String) -> Result<String> {
     let wrapped = serde_urlencoded::from_str::<Vec<(String, String)>>(&stream)?;
     let query_type = wrapped[0].0.as_str();
     let query = wrapped[0].1.as_str();
-    println!("Starting query: {}", query);
+    println!("Starting {}", query);
     let mut media_type = "sub";
     if wrapped.len() == 2 {
         media_type = wrapped[1].1.as_str();

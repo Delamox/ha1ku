@@ -1,5 +1,6 @@
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Context, Result, anyhow, bail};
 use reqwest::Client;
+use rust_fuzzy_search::fuzzy_compare;
 use serde_derive::Deserialize;
 use serde_json::Number;
 use std::{cmp::Ordering, collections::HashMap};
@@ -22,13 +23,17 @@ pub async fn search(query: &str, translation: &str) -> Result<Vec<Search>> {
     let params_serialized = serde_urlencoded::to_string(params)?;
 
     let response_raw = api_call(&params_serialized).await?;
-    let response_serialized: SearchWrapper = serde_json::from_str(
+    let mut response_serialized: SearchWrapper = serde_json::from_str(
         response_raw
             .split_at(17)
             .1
             .split_at(response_raw.len() - 20)
             .0,
     )?;
+    response_serialized
+        .edges
+        .sort_by(|x, y| fuzzy_compare(query, &y.name).total_cmp(&fuzzy_compare(query, &x.name)));
+
     match response_serialized.edges.len() {
         0 => Err(anyhow!("no search results for query")),
         _ => Ok(response_serialized.edges),
@@ -111,6 +116,9 @@ pub async fn sources(
     response_serialized
         .sourceUrls
         .sort_by(|x, y| y.priority.total_cmp(&x.priority));
+    if response_serialized.sourceUrls.len() == 0 {
+        bail!(anyhow!("no sources found"));
+    };
     let response_decrypted = substitute_data(response_serialized.sourceUrls[0].sourceUrl.as_str())?;
 
     let response_raw = Client::new()
