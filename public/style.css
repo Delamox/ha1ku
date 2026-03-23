@@ -169,6 +169,10 @@ a {
   width: 88px;
   height: 31px;
   margin-top: 0;
+  image-rendering: auto;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: -webkit-optimize-contrast;
 }
 
 .poster {
