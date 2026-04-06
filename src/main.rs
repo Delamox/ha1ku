@@ -1,18 +1,22 @@
 use anyhow::{Result, anyhow};
-use ha1ku::{episodes, info, search, sources};
+use ha1ku::{episodes, info, search, sources, update_tokens};
 use rocket::data::{Data, ToByteUnit};
 use rocket::fs::FileServer;
 use rocket::response::content::RawHtml;
+use rocket::tokio::task;
 
 #[macro_use]
 extern crate rocket;
 
-#[launch]
-fn rocket() -> _ {
+#[rocket::main]
+async fn main() {
     let path = std::env::current_dir().unwrap().join("public");
-    rocket::build()
+    task::spawn(update_tokens());
+    let result = rocket::build()
         .mount("/", FileServer::from(path))
         .mount("/", routes![query_handler, info_handler])
+        .launch()
+        .await;
 }
 
 #[post("/query", data = "<data>")]

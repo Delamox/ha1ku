@@ -1,9 +1,16 @@
 use anyhow::{Context, Result, anyhow, bail};
 use reqwest::Client;
+use rocket::tokio::time;
 use rust_fuzzy_search::fuzzy_compare;
 use serde_derive::Deserialize;
 use serde_json::Number;
-use std::{cmp::Ordering, collections::HashMap};
+use std::{
+    cmp::Ordering,
+    collections::HashMap,
+    process::{Command, Stdio},
+    sync::{Arc, LazyLock, Mutex},
+    time::Duration,
+};
 
 const BASEURL: &str = "https://allmanga.to";
 const SEARCHGQL: &str = "query( $search: SearchInput $limit: Int $page: Int $translationType: VaildTranslationTypeEnumType $countryOrigin: VaildCountryOriginEnumType ) { shows( search: $search limit: $limit page: $page translationType: $translationType countryOrigin: $countryOrigin ) { edges { _id name availableEpisodes __typename } }}";
@@ -11,7 +18,41 @@ const EPISODEGQL: &str = "query ($showId: String!, $episodeNumStart: Float!, $ep
 const SOURCEGQL: &str = "query ($showId: String!, $translationType: VaildTranslationTypeEnumType!, $episodeString: String!) { episode( showId: $showId translationType: $translationType episodeString: $episodeString ) { sourceUrls }}";
 const INFOGQL: &str = "query ($_id: String!) { show ( _id: $_id ) { name, englishName, nativeName, thumbnail, score, episodeCount, description, status, studios }}";
 const AGENT: &str =
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/121.0";
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:149.0) Gecko/20100101 Firefox/149.0";
+const PYTHON: &str = "/home/del/endpoints/CF-Clearance-Scraper/venv/bin/python";
+const EXEC: &str = "/home/del/endpoints/CF-Clearance-Scraper/main.py";
+
+static AGENT_: LazyLock<Arc<Mutex<CFClearance>>> = LazyLock::new(|| {
+    Arc::new(Mutex::new(CFClearance {
+        cf_clearance: String::new(),
+        user_agent: String::new(),
+    }))
+});
+
+#[derive(Debug, Clone)]
+struct CFClearance {
+    cf_clearance: String,
+    user_agent: String,
+}
+
+pub async fn update_tokens() -> Result<()> {
+    let mut interval = time::interval(Duration::from_mins(25));
+
+    loop {
+        interval.tick().await;
+        let command = Command::new(PYTHON)
+            .arg(EXEC)
+            .arg("https://api.allanime.day")
+            .stdout(Stdio::piped())
+            .output()?;
+        let output = String::from_utf8(command.stderr)?;
+        let split: Vec<&str> = output.split('\n').collect();
+        *Arc::clone(&AGENT_).lock().unwrap() = CFClearance {
+            cf_clearance: split[0].to_string(),
+            user_agent: split[1].to_string(),
+        };
+    }
+}
 
 pub async fn search(query: &str, translation: &str) -> Result<Vec<Search>> {
     let params_raw = format!(
@@ -120,11 +161,12 @@ pub async fn sources(
         bail!(anyhow!("no sources found"));
     };
     let response_decrypted = substitute_data(response_serialized.sourceUrls[0].sourceUrl.as_str())?;
-
+    let clearance: CFClearance = AGENT_.lock().unwrap().clone();
     let response_raw = Client::new()
         .get(format!("https://allanime.day{}", response_decrypted))
         .header("Referer", BASEURL)
-        .header("Agent", AGENT)
+        .header("Agent", clearance.user_agent)
+        .header("Cookie", clearance.cf_clearance)
         .send()
         .await?
         .text()
@@ -167,13 +209,15 @@ fn substitute_data(input: &str) -> Result<String> {
 }
 
 async fn api_call(params_serialized: &str) -> Result<String> {
+    let clearance: CFClearance = AGENT_.lock().unwrap().clone();
     let response_raw = Client::new()
         .get(format!(
             "https://api.allanime.day/api?{}",
             params_serialized
         ))
         .header("Referer", BASEURL)
-        .header("Agent", AGENT)
+        .header("User-Agent", clearance.user_agent)
+        .header("Cookie", clearance.cf_clearance)
         .send()
         .await?
         .text()
